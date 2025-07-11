@@ -1,101 +1,107 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState } from "react";
+import NoteList from "./components/NoteList";
+import NoteDetail from "./components/NoteDetail";
+import SearchInput from "./components/SearchInput";
+import { useNotes } from "./hooks/useNotes";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const {
+    notes,
+    allNotes,
+    selectedId,
+    setSelectedId,
+    createNote,
+    updateNote,
+    deleteNote,
+    searchQuery,
+    setSearchQuery,
+  } = useNotes();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const selectedNote = allNotes.find((n) => n.id === selectedId);
+  const [isEditing, setIsEditing] = useState(false);
+
+  return (
+    <div className="min-h-screen h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)] overflow-hidden">
+      <header className="w-full flex gap-4 items-center justify-between px-4 py-5 border-b border-gray-200 dark:border-gray-800 bg-[var(--background)] z-10">
+        <h1 className="text-lg font-semibold text-primary tracking-wide">Notes</h1>
+        <div className="max-w-xs w-full hidden md:block">
+          <SearchInput value={searchQuery} onChange={setSearchQuery} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <a href="#" className="text-secondary text-sm hover:text-primary">by NoteApp</a>
+      </header>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="hidden md:flex w-[340px] min-w-[250px] max-w-sm border-r border-gray-200 dark:border-gray-800 flex-col">
+          <div className="p-3">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} />
+          </div>
+          <NoteList
+            notes={notes}
+            selectedId={selectedId}
+            searchQuery={searchQuery}
+            onSelect={setSelectedId}
+            onAdd={createNote}
+            onDelete={deleteNote}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+        {/* Mobile sticky sidebar */}
+        <div className="flex md:hidden flex-col w-full max-w-full bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
+          <div className="flex gap-2 items-center p-2">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} />
+            <button
+              className="bg-primary text-white hover:bg-blue-700 rounded-full px-4 py-2 ml-2 transition text-sm"
+              title="New note"
+              onClick={createNote}
+            >
+              +
+            </button>
+          </div>
+          <div className="h-44 overflow-y-auto">
+            <NoteList
+              notes={notes}
+              selectedId={selectedId}
+              searchQuery={searchQuery}
+              onSelect={setSelectedId}
+              onAdd={createNote}
+              onDelete={deleteNote}
+            />
+          </div>
+        </div>
+        {/* Main (note detail/editor) */}
+        <main className="flex-1 h-full min-w-0">
+          <NoteDetail
+            note={selectedNote}
+            onEdit={(title, content) => {
+              if (selectedNote)
+                updateNote(selectedNote.id, { title, content });
+            }}
+            onSave={() => {}}
+            onDelete={() => {
+              if (selectedNote) {
+                deleteNote(selectedNote.id);
+                setIsEditing(false);
+              }
+            }}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        </main>
+      </div>
+      <footer className="text-center py-4 px-2 text-xs text-secondary bg-gray-50 dark:bg-black border-t border-gray-200 dark:border-gray-800">
+        &copy; {new Date().getFullYear()} NoteApp. All rights reserved.
       </footer>
+      <style jsx global>{`
+        :root {
+          --primary: #3B82F6;
+          --secondary: #6B7280;
+          --accent: #F59E42;
+        }
+        .text-primary { color: var(--primary); }
+        .bg-primary { background: var(--primary); }
+        .text-secondary { color: var(--secondary); }
+        .bg-accent { background: var(--accent); }
+      `}</style>
     </div>
   );
 }
